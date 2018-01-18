@@ -13,6 +13,7 @@ class PhenotypesHandler:
         self._input = input
         self._neural_networks = phenotypes
         self._signal_provider = None
+        self._best_phenotype = None
 
         self._connect_to_signals_provider()
 
@@ -25,6 +26,7 @@ class PhenotypesHandler:
             nn._genome.fitness = 1
 
     def run_all_phenotypes2(self):
+        Generation.best_phenotype = self._neural_networks[0]
         for nn in self._neural_networks:
             a = np.ones(4)
             b = np.random.random(4) < 0.5
@@ -33,12 +35,17 @@ class PhenotypesHandler:
             for y, y_d in zip(Y, np.logical_xor(a, b)):
                 fitness += 5*np.exp(-(y - y_d)**2)
             nn._genome.fitness = fitness
+            if fitness > Generation.best_phenotype._genome.fitness:
+                Generation.best_phenotype = nn
 
     def get_phenotypes_fitness_scores(self):
         phenotypes_fitnesses = []
         for nn in self._neural_networks:
             phenotypes_fitnesses.append(nn._genome.fitness)
         return phenotypes_fitnesses
+
+    def get_best_phenotype(self):
+        return self._best_phenotype
 
     def _connect_to_signals_provider(self):
         """
@@ -52,6 +59,7 @@ class PhenotypesHandler:
 
 class Generation:
     #ID for logging purpose
+    best_phenotype = None
     _GENERATION_ID = 0
 
     def __init__(self, groups=None, mutation_coefficients=None, compatibility_coefficients=None, compatibility_threshold=6.0, logger=None):
@@ -217,6 +225,7 @@ class Generation:
         return offsprings
 
     def _is_group_fitting_for_offspring(self, representative, offspring):
+        #print(str(offspring.compatibility_distance(representative, self.compatibility_coefficients)))
         return offspring.compatibility_distance(representative, self.compatibility_coefficients) < self.compatibility_threshold
 
     def _handle_left_genomes(self, new_groups, left_genomes):

@@ -252,7 +252,9 @@ class Genome:
         excess_component = coefficients['excess_factor'] * excess_number / normalization_factor
         disjoint_component = coefficients['disjoint_factor'] * disjoint_number / normalization_factor
         weight_difference_component = coefficients['weight_difference_factor'] * avg_weight_difference
-
+        #print("excess component = " + str(excess_component))
+        #print("disjoint component = " + str(disjoint_component))
+        #print("weight difference component = " + str(weight_difference_component))
         return excess_component + disjoint_component + weight_difference_component
 
     @staticmethod
