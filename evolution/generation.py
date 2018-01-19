@@ -11,6 +11,9 @@ import sys
 import socket
 import subprocess
 import pickle
+import websockets
+import io
+import base64
 
 class Evaluate(Thread):
     SOCKET_ID = 0
@@ -30,30 +33,20 @@ class Evaluate(Thread):
         pass
 
     def run(self):
-        address = '/tmp/{}'.format(Evaluate.get_socket_id())
+        out_address = '/tmp/fftrfaiffnfffdfdfff{}'.format(Evaluate.get_socket_id())
+        in_address = '/tmp/itffrafinfffffdfdfff{}'.format(Evaluate.get_socket_id())
+        os.mkfifo(out_address)
+        os.mkfifo(in_address)
 
         # Create a UDS socket
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        # Make sure the socket does not already exist
-        try:
-            os.unlink(address)
-        except OSError:
-            if os.path.exists(address):
-                raise
-
-        # Bind the socket to the port
-        print('starting up on {}'.format(address))
-        sock.bind(address)
-        # Listen for incoming connections
-        sock.listen(1)
 
         # run tetris game and give it socket address
-        subprocess.Popen(['python3', '../gist.py', address])
+        subprocess.Popen(['python3', 'gist.py', out_address, in_address])
 
+        out_pipe = open(out_address, "w")
+        in_pipe = open(out_address, "r")
         # Wait for a connection
         print('waiting for a connection')
-        connection, client_address = sock.accept()
         while True:
             try:
                 print('connection from', client_address)
@@ -61,13 +54,13 @@ class Evaluate(Thread):
                 total_data = []
                 while True:
                     # receive data
-                    data = connection.recv(16)
+                    data = in_pipe.read(256)
                     total_data.append(data)
                     if not data:
                         break
 
                 # convert data from binary
-                score, board = pickle.loads(b''.join(total_data))
+                score, board = pickle.loads(b''.join(base64.b64decode(total_data)))
                 self.calculateFitness(score, board)
                 input = [x for row in board for x in row]
                 output = self._neural_network.forward(input)
@@ -81,15 +74,16 @@ class Evaluate(Thread):
                     4: 'RETURN'
                 }
                 # send move to game
-                sock.sendall(pickle.dumps(moves[output.index(move)]))
+                out_pipe.write(base64.b64encode(pickle.dumps(moves[output.index(move)])).decode("ascii"))
                 print('received "{}"'.format((score, board)))
             except:
                 # Clean up the connection
                 break
                 print('closing')
-        connection.close()
-        sock.close()
-        os.unlink(address)
+        out_pipe.close()
+        in_pipe.close()
+        os.unlink(out_address)
+        os.unlink(in_address)
 
     def join(self):
         Thread.join(self)
@@ -232,7 +226,7 @@ class Generation:
 
         self.compatibility_threshold = compatibility_threshold
         self.r_factor = 0.2
-        self.population_size = 10
+        self.population_size = 1
 
     def create_new_generation(self):
         self.create_phenotypes()
@@ -310,6 +304,8 @@ class Generation:
 
     def calculate_groups_offsprings(self, group_scores, total_generation_score):
         offspring_count = {}
+        if total_generation_score == 0:
+            return 0
         for group_id, group_score in group_scores.items():
             offspring_count[group_id] = round((float(group_score)/float(total_generation_score)) * self.population_size)
 

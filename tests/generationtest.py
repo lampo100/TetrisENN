@@ -339,7 +339,7 @@ class TestGenerationCase(unittest.TestCase):
         c31 = ConnectionGene(2, 3, enabled=True)
         c33 = ConnectionGene(2, 3, enabled=True)
 
-        for i in range(10):
+        for i in range(1):
             specie.add_genome(Genome([[1, 9, random.normalvariate(mu=0.0, sigma=1.0), True], [1, 10, random.normalvariate(mu=0.0, sigma=1.0), True], [1, 11, random.normalvariate(mu=0.0, sigma=1.0), True], [1, 12, random.normalvariate(mu=0.0, sigma=1.0), True],
                                       [2, 9, random.normalvariate(mu=0.0, sigma=1.0), True], [2, 10, random.normalvariate(mu=0.0, sigma=1.0), True], [2, 11, random.normalvariate(mu=0.0, sigma=1.0), True], [2, 12, random.normalvariate(mu=0.0, sigma=1.0), True],
                                       [3, 9, random.normalvariate(mu=0.0, sigma=1.0), True], [3, 10, random.normalvariate(mu=0.0, sigma=1.0), True], [3, 11, random.normalvariate(mu=0.0, sigma=1.0), True], [3, 12, random.normalvariate(mu=0.0, sigma=1.0), True],
